@@ -1,0 +1,38 @@
+
+#-----------------------------------------------------------
+# PCS/PMA Clock period Constraints: please do not relax    -
+#-----------------------------------------------------------
+NET "user_clk125_2" TNM_NET = "TNM_sysclk";
+NET "*/beam_clk" TNM_NET = "TNM_beam_clk";
+TIMESPEC TS_beam_clk = PERIOD "TNM_beam_clk" 37.736 ns HIGH 50 %                                ;
+NET "*/i_MPA_top/clk160from125" TNM_NET = "TNM_clk160from125";
+NET "*/i_MPA_top/clk400" TNM_NET = "TNM_clk400";
+NET "*/i_MPA_top/clk320" TNM_NET = "TNM_clk320";
+NET "*/i_MPA_top/i_clocks/clk160" TNM_NET = "TNM_clk160";
+NET "*/i_MPA_top/clk160_PS" TNM_NET = "TNM_clk160_PS";
+NET "user_ipb_clk" TNM_NET = "TNM_ipb_clk";
+TIMESPEC TS_beam_clk2clk320 = FROM "TNM_beam_clk" TO "TNM_clk320" TIG ;
+TIMESPEC TS_beam_clk2ipb_clk = FROM "TNM_beam_clk" TO "TNM_ipb_clk" TIG ;
+TIMESPEC TS_clk160from1252ipb_clk = FROM "TNM_clk160from125" TO "TNM_ipb_clk" TIG ;
+TIMESPEC TS_clk4002ipb_clk = FROM "TNM_clk400" TO "TNM_ipb_clk" TIG ;
+TIMESPEC TS_clk3202ipb_clk = FROM "TNM_clk320" TO "TNM_ipb_clk" TIG ;
+TIMESPEC TS_ipb_clk2clk160from125 = FROM "TNM_ipb_clk" TO "TNM_clk160from125" TIG ;
+TIMESPEC TS_ipb_clk2clk160 = FROM "TNM_ipb_clk" TO "TNM_clk160" TIG ;
+TIMESPEC TS_ipb_clk2clk160_PS = FROM "TNM_ipb_clk" TO "TNM_clk160_PS" TIG ;
+TIMESPEC TS_ipb_clk2clk320 = FROM "TNM_ipb_clk" TO "TNM_clk320" TIG ;
+TIMESPEC TS_ipb_clk2clk400 = FROM "TNM_ipb_clk" TO "TNM_clk400" TIG ;
+TIMESPEC TS_clk3202sysclk = FROM "TNM_clk320" TO "TNM_sysclk" TIG ;
+TIMESPEC TS_clk3202clk160_PS = FROM "TNM_clk320" TO "TNM_clk160_PS" TIG ;
+TIMESPEC TS_clk3202clk400 = FROM "TNM_clk320" TO "TNM_clk400" TIG ;
+INST "*/i_MPA_top/*i_trig_bufA*" TNM = TNM_sysBRAMs;
+INST "*/i_MPA_top/*i_trig_bufB*" TNM = TNM_sysBRAMs;
+INST "*/i_MPA_top/i_MPAread/g_mem_rbuf[?].i_mem_rbuf/sdp_bl.ramb36_dp_bl.ram36_bl" TNM = TNM_sysBRAMs;
+INST "*/i_MPA_top/i_MPAread/i_counter_rbuf/sdp_bl.ramb36_dp_bl.ram36_bl" TNM = TNM_sysBRAMs;
+INST "*/i_MPA_top/i_SPIconf/i_rbuf/sdp_bl.ramb36_dp_bl.ram36_bl" TNM = TNM_sysBRAMs;
+INST "*/i_MPA_top/i_SPIconf/i_wbuf/ramb_bl.ramb36_dp_bl.ram36_bl" TNM = TNM_sysBRAMs;
+INST "*/i_MPA_top/i_strip_in/g_strip_rx[?].i_buf/sdp_bl.ramb18_dp_bl.ram18_bl" TNM = TNM_sysBRAMs;
+TIMESPEC TS_sysBRAM2ipb_clk = FROM "TNM_sysBRAMs" TO "TNM_ipb_clk" 16 ns;
+TIMESPEC TS_ipb_clk2sysBRAM = FROM "TNM_ipb_clk" TO "TNM_sysBRAMs" 16 ns;
+
+#NET "fmc2_la_p<20>" CLOCK_DEDICATED_ROUTE = FALSE;
+#INST "*/i_MPA_top/i_clocks/i_MMCM_beam_clk160.CLKIN1" CLOCK_DEDICATED_ROUTE = FALSE;

@@ -1,0 +1,2 @@
+vhdl isim_temp "aquisition.vhd"
+vhdl isim_temp "acquisition_tb.vhd"

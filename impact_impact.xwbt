@@ -1,0 +1,8 @@
+INTSTYLE=impact
+INFILE=/home/readout/Firmware_dev/impact.xsl
+OUTFILE=/home/readout/Firmware_dev/impact.xsl
+FAMILY=Single
+PART=Single
+WORKINGDIR=/home/readout/Firmware_dev
+LICENSE=iMPACT
+USER_INFO=iMPACT

@@ -1,0 +1,17 @@
+PROMGEN: Xilinx Prom Generator P.20131013
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+
+promgen -w -p mcs -c FF -o /home/readout/Firmware_dev//Untitled -s 32768 -u 0000 /home/readout/Firmware_dev/glib_top.bit -spi 
+
+PROM /home/readout/Firmware_dev/Untitled.prm map: Wed Jun 22 14:54:58 2016
+
+Calculating PROM checksum with fill value ff
+
+Format        Mcs86 (32-bit)
+Size          32768K
+PROM start    0000:0000
+PROM end      01ff:ffff
+PROM checksum cd276812
+
+        Addr1        Addr2                     Date File(s)
+    0000:0000    0032:ac43     Jun 22 14:35:47 2016 /home/readout/Firmware_dev/glib_top.bit
