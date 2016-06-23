@@ -1,3 +1,6 @@
+# Editor backup files
+*.swp
+
 ################################################
 # Kindly taken from
 # https://raw.githubusercontent.com/github/gitignore/master/Global/XilinxISE.gitignore
@@ -69,3 +72,16 @@ xlnx_auto_0_xdb/
 xst/
 _ngo/
 _xmsgs/
+
+# additional files (Gregor)
+fuse.log
+glib_top.clk_rgn
+glib_top.dly
+glib_top_clkrgnrpt.xrpt
+glib_top_map.psr
+glib_top_reportgen.xrpt
+isim.cmd
+isim.log
+isim/
+reportgen.log
+
