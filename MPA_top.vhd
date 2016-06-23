@@ -33,11 +33,12 @@ library UNISIM;
 use UNISIM.VComponents.all;
 Library UNIMACRO;
 use UNIMACRO.vcomponents.all;
+use work.fmc_package.all;
 
 entity MPA_top is
     Port ( 
 -- Gigabit Ethernet pins
-				clk125 : in  STD_LOGIC;
+					 clk125 : in  STD_LOGIC;
            beam_clk : in  STD_LOGIC;
            beam_data : in  STD_LOGIC;
            led : out  STD_LOGIC_VECTOR(1 to 2);
@@ -89,8 +90,14 @@ entity MPA_top is
            ipb_wdata : in  STD_LOGIC_VECTOR(31 downto 0);
            ipb_rdata : out  STD_LOGIC_VECTOR(31 downto 0);
 					 ipb_ack : out std_logic;
-			-- Shutter Output	
-			shutter_o : out STD_LOGIC
+					 probe_p : out std_logic;
+					 probe_n : out std_logic;
+					 probe_en: out std_logic;
+					 busy_p : out std_logic;
+					 busy_n : out std_logic;
+					 busy_en : out std_logic;
+					 tel_busy_p : in std_logic;
+					 tel_busy_n : in std_logic
 					 );
 end MPA_top;
 
@@ -110,7 +117,10 @@ COMPONENT clocks
 		clk160_PS : OUT std_logic;
 		PS_ready : OUT std_logic;
 		clk160_p : OUT std_logic;
-		clk160_n : OUT std_logic
+		clk160_n : OUT std_logic;
+		probe_p : OUT std_logic;
+		probe_n : OUT std_logic;
+		probe_en : OUT std_logic
 		);
 END COMPONENT;
 COMPONENT strip_in
@@ -249,7 +259,9 @@ COMPONENT acquisition
 		shutter_open : OUT std_logic;
 		calstrobe_p : OUT std_logic;
 		calstrobe_n : OUT std_logic;
-		ipb_rdata : OUT std_logic_vector(31 downto 0)
+		ipb_rdata : OUT std_logic_vector(31 downto 0);
+		tel_busy_p : IN std_logic;
+		tel_busy_n : IN std_logic
 		);
 END COMPONENT;
 --COMPONENT trigpattern
@@ -369,18 +381,12 @@ signal trig_countA_Di : std_logic_vector(35 downto 0) := (others =>'0');
 signal trig_countA_Do : std_logic_vector(35 downto 0) := (others =>'0');
 signal trig_count_wa : std_logic_vector(4 downto 0) := (others =>'0');
 signal trig_count_ra : std_logic_vector(4 downto 0) := (others =>'0');
-signal shutter_open_info : std_logic := '0';
+
+signal busy_o : std_logic := '1';
 
 begin
-
-
 LED(1) <= 'Z';
 LED(2) <= 'Z';
-
---shutter_o <= shutter_open;
-shutter_open_info <= shutter_open;
-shutter_o <= shutter_open_info;
-
 i_clk40_buf: bufg port map(i => clk125, o => sysclk);
 i_clocks: clocks PORT MAP(
 		clk125 => sysclk,
@@ -396,7 +402,10 @@ i_clocks: clocks PORT MAP(
 		clk160_PS => clk160_PS,
 		PS_ready => PS_ready,
 		clk160_p => clk160_p,
-		clk160_n => clk160_n
+		clk160_n => clk160_n,
+		probe_p => probe_p,
+		probe_n => probe_n,
+		probe_en => probe_en
 	);
 i_strip_in: strip_in PORT MAP(
 		clk => clk400,
@@ -522,7 +531,9 @@ i_acquisition: acquisition PORT MAP(
 		ipb_strobe => ipb_strobe,
 		ipb_addr => ipb_addr,
 		ipb_wdata => ipb_wdata,
-		ipb_rdata => acq_data
+		ipb_rdata => acq_data,
+		tel_busy_p => tel_busy_p,
+		tel_busy_n => tel_busy_n
 	);
 beam_datap <= beam_data_pol xor beam_data;
 --i_trigpattern: trigpattern generic map(pattern => "01010", CLOCK_EDGE => CLOCK_EDGE(beam_clk_pol)) PORT MAP(
@@ -832,6 +843,7 @@ begin
 			else
 				acq_start <= '0';
 			end if;
+			-- This is what we looking for
 			if(read_done = '1' and repeat = '1')then
 				restart <= '1';
 			elsif(or_reduce(buffer_avl) = '1')then
@@ -871,5 +883,28 @@ begin
 	end if;
 end process;
 ipb_ack <= ipb_strobe;
+
+--------------------------
+-- Output on LEMO1 --
+--------------------------
+
+busy_o <= not(shutter_open);
+
+i_test_out_p: OBUFDS generic map(IOSTANDARD => "LVDS_25")
+	port map (
+		I => busy_o,
+		O => busy_p,
+		OB => busy_n
+	);
+	
+-- Enable output
+i_out_en: OBUFT generic map(IOSTANDARD => "lvcmos25")
+	port map (
+		I => '0',
+		O => busy_en,
+		T => '0'
+	);
+
+
 end Behavioral;
 

@@ -33,6 +33,3 @@ INST "*/i_MPA_top/i_SPIconf/i_wbuf/ramb_bl.ramb36_dp_bl.ram36_bl" TNM = TNM_sysB
 INST "*/i_MPA_top/i_strip_in/g_strip_rx[?].i_buf/sdp_bl.ramb18_dp_bl.ram18_bl" TNM = TNM_sysBRAMs;
 TIMESPEC TS_sysBRAM2ipb_clk = FROM "TNM_sysBRAMs" TO "TNM_ipb_clk" 16 ns;
 TIMESPEC TS_ipb_clk2sysBRAM = FROM "TNM_ipb_clk" TO "TNM_sysBRAMs" 16 ns;
-
-#NET "fmc2_la_p<20>" CLOCK_DEDICATED_ROUTE = FALSE;
-#INST "*/i_MPA_top/i_clocks/i_MMCM_beam_clk160.CLKIN1" CLOCK_DEDICATED_ROUTE = FALSE;

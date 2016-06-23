@@ -37,10 +37,10 @@ entity acquisition is
            reset : in  STD_LOGIC;
            test_beam : in  STD_LOGIC;
 					 calibration : in  STD_LOGIC;
-           beam_trig : in  STD_LOGIC;
+           beam_trig : in  STD_LOGIC := '0';
            beam_halt : in  STD_LOGIC;
            start : in  STD_LOGIC;
-					 shutter_delay : in std_logic_vector(3 downto 0);
+					 shutter_delay : in std_logic_vector(3 downto 0) := (others => '0');
 					 hitOR_p : in  STD_LOGIC;
            hitOR_n : in  STD_LOGIC;
            set_read_clk : out  STD_LOGIC;
@@ -56,7 +56,10 @@ entity acquisition is
 					 ipb_strobe : in std_logic;
 					 ipb_addr : in std_logic_vector(15 downto 0);
 					 ipb_wdata : in std_logic_vector(31 downto 0);
-           ipb_rdata : out  STD_LOGIC_VECTOR (31 downto 0));
+           ipb_rdata : out  STD_LOGIC_VECTOR (31 downto 0);
+			  tel_busy_p : IN STD_LOGIC := '0';
+			  tel_busy_n : IN STD_LOGIC := '1'
+			  );
 end acquisition;
 
 architecture Behavioral of acquisition is
@@ -81,6 +84,9 @@ signal ipbus_calib : std_logic := '0';
 signal done_i : std_logic := '0';
 signal done_sync : std_logic_vector(1 downto 0) := (others =>'0');
 signal start_sync : std_logic_vector(4 downto 0) := (others =>'0');
+signal tel_busy_sync : std_logic_vector(4 downto 0) := (others =>'0');
+signal tel_busy_stop : std_logic_vector(4 downto 0) := (others =>'0');
+signal start_while_busy : std_logic := '0';
 signal HITOR_sync : std_logic_vector(4 downto 0) := (others =>'0');
 signal state : std_logic_vector(2 downto 0) := idle;
 signal npulse : std_logic_vector(15 downto 0) := x"0001";
@@ -100,10 +106,15 @@ signal beam_halt_sync : std_logic_vector(4 downto 0) := (others =>'0');
 attribute IOB : string;
 attribute IOB of calstrobe_o, shutter_o : signal is "true";
 
+signal tel_busy : std_logic := '0';
+
 begin
 i_hitOR_buf: IBUFDS generic map(DIFF_TERM => TRUE,IOSTANDARD => "LVDS_25") port map(i => hitOR_p, ib => hitOR_n, o => hitOR);
 i_calstrobe_obuf : OBUFDS generic map (IOSTANDARD => "LVDS_25") port map (O => calstrobe_p, OB => calstrobe_n, I => calstrobe_o(1));
 i_shutter_obuf : OBUFDS generic map (IOSTANDARD => "LVDS_25") port map (O => shutter_p, OB => shutter_n, I => shutter_o(1));
+
+i_telBusy_ibuf : IBUFDS generic map (DIFF_TERM => TRUE, IOSTANDARD => "LVDS_25") port map (i => tel_busy_p, ib => tel_busy_n, o => tel_busy );
+
 shutter_open <= shutter;
 i_beam_trig_dl : SRL16
    port map (
@@ -122,6 +133,9 @@ begin
 		beam_trig_sync <= (others => '0');
 		beam_halt_sync <= (others => '0');
 		start_sync <= (others => '0');
+		tel_busy_sync <= (others => '0');
+		tel_busy_stop <= (others => '0');
+		start_while_busy <= '0';
 		HITOR_sync <= (others => '0');
 		set_read_clk <= '0';
 		state <= idle;
@@ -144,12 +158,17 @@ begin
 		beam_halt_sync(4) <= not beam_halt_sync(3) and beam_halt_sync(2);
 		start_sync(3 downto 0) <= start_sync(2 downto 0) & start;
 		start_sync(4) <= start_sync(3) and not start_sync(2);
+		tel_busy_sync(3 downto 0) <= tel_busy_sync(2 downto 0) & tel_busy;
+		tel_busy_sync(4) <= not tel_busy_sync(3) and tel_busy_sync(2);
+		tel_busy_stop(3 downto 0) <= tel_busy_stop(2 downto 0) & tel_busy;
+		tel_busy_stop(4) <= tel_busy_stop(3) and not tel_busy_stop(2); -- stop busy
 		HITOR_sync(3 downto 0) <= HITOR_sync(2 downto 0) & HITOR;
 		HITOR_sync(4) <= not HITOR_sync(3) and HITOR_sync(2);
 		calstrobe_o <= calstrobe_o(0) & calstrobe;
 		shutter_o <= shutter_o(0) & shutter;
 		if(shutter = '0')then
 			time_cntr <= time_out;
+		-- counter during open shutter
 		elsif(or_reduce(time_cntr(3 downto 0)) = '1' or time_cntr_high = '1')then
 			time_cntr(3 downto 0) <= time_cntr(3 downto 0) - 1;
 			if(time_cntr(3 downto 0) = x"0")then
@@ -168,9 +187,15 @@ begin
 				calstrobe <= '0';
 				set_read_clk <= '0';
 				cnt_del_zero <= '0';
+				-- if time out occurs jump to wait4hit which will close the shiutter and start the readout
 				if(time_outed = '1' and shutter = '1')then
 					state <= wait4hit;
-				elsif((test_beam = '0' and start_sync(4) = '1') or (test_beam = '1' and time_outed = '0' and beam_trig_dl_q = '1'))then
+				-- open shutter if - start_acq from MPA_top is 1 and telscope is not busy or
+				--                 - we got the start signal (start_while_busy) and the telescope is not busy anymore
+				elsif((test_beam = '0' and start_sync(4) = '1' and tel_busy_sync(4) = '0')
+						or (test_beam = '0' and start_while_busy = '1' and tel_busy_stop(4) = '1')
+						or (test_beam = '1' and time_outed = '0' and beam_trig_dl_q = '1'))then
+					start_while_busy <= '0';
 					shutter <= '1';
 					if(calibration = '0')then
 						state <= wait4hit;
@@ -189,6 +214,9 @@ begin
 							cnt_del_zero <= '0';
 						end if;
 					end if;
+				-- we got the start signal but the telescope is busy -> start as soon as the telescope is not busy anymore
+				elsif(test_beam = '0' and start_sync(4) = '1' and tel_busy_sync(4) = '1')then
+					start_while_busy <= '1';
 				end if;
 			when init =>
 				cnt_del <= cnt_del - 1;
@@ -264,12 +292,13 @@ begin
 			when wait4hit =>
 				if(shutter = '0')then
 					state <= idle;
-				elsif((test_beam = '0' and HITOR_sync(4) = '1') or time_outed = '1')then
+				-- Start readout if shutter exceeds shutter duration or telescope is busy
+				elsif((test_beam = '0' and HITOR_sync(4) = '1') or time_outed = '1' or tel_busy = '1')then
 					state <= fin;
 					cnt_del <= x"000f";
 					set_read_clk <= '1';
 				end if;
-			when others =>
+			when others => --including "fin"
 				set_read_clk <= '0';
 				cnt_del <= cnt_del - 1;
 				if(cnt_del_zero = '1')then
@@ -302,6 +331,9 @@ i_shutter_dl : SRL16
       CLK => clk,   -- Clock input
       D => shutter        -- SRL data input
    );
+	
+-- IPBus
+	
 process(ipb_clk,reset,done_i)
 begin
 	if(reset = '1')then

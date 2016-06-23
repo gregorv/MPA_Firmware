@@ -44,13 +44,13 @@ ARCHITECTURE behavior OF acquisition_tb IS
          clk : IN  std_logic;
          reset : IN  std_logic;
          test_beam : IN  std_logic;
-         beam_start : IN  std_logic;
+--         beam_start : IN  std_logic;
          beam_halt : IN  std_logic;
          start : IN  std_logic;
          hitOR_p : IN  std_logic;
          hitOR_n : IN  std_logic;
-         IsCalib : IN  std_logic;
-         setCLKOR : OUT  std_logic;
+--         IsCalib : IN  std_logic;
+--         setCLKOR : OUT  std_logic;
          done : OUT  std_logic;
          shutter_p : OUT  std_logic;
          shutter_n : OUT  std_logic;
@@ -70,12 +70,12 @@ ARCHITECTURE behavior OF acquisition_tb IS
    signal clk : std_logic := '0';
    signal reset : std_logic := '1';
    signal test_beam : std_logic := '0';
-   signal beam_start : std_logic := '0';
+--   signal beam_start : std_logic := '0';
    signal beam_halt : std_logic := '0';
    signal start : std_logic := '0';
    signal hitOR_p : std_logic := '0';
    signal hitOR_n : std_logic := '0';
-   signal IsCalib : std_logic := '1';
+--   signal IsCalib : std_logic := '1';
    signal ipb_clk : std_logic := '0';
    signal ipb_write : std_logic := '1';
    signal ipb_strobe : std_logic := '0';
@@ -83,7 +83,7 @@ ARCHITECTURE behavior OF acquisition_tb IS
    signal ipb_wdata : std_logic_vector(31 downto 0) := (others => '0');
 
  	--Outputs
-   signal setCLKOR : std_logic;
+--   signal setCLKOR : std_logic;
    signal done : std_logic;
    signal shutter_p : std_logic;
    signal shutter_n : std_logic;
@@ -102,13 +102,13 @@ BEGIN
           clk => clk,
           reset => reset,
           test_beam => test_beam,
-          beam_start => beam_start,
+--          beam_start => beam_start,
           beam_halt => beam_halt,
           start => start,
           hitOR_p => hitOR_p,
           hitOR_n => hitOR_n,
-          IsCalib => IsCalib,
-          setCLKOR => setCLKOR,
+--          IsCalib => IsCalib,
+--          setCLKOR => setCLKOR,
           done => done,
           shutter_p => shutter_p,
           shutter_n => shutter_n,

@@ -21,9 +21,8 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use work.ipbus.all;
 use work.fmc_package.all;
--- for OBUFT
-library unisim;
-use unisim.vcomponents.all;
+--! xilinx packages
+
 
 
 -- Uncomment the following library declaration if using
@@ -32,25 +31,23 @@ use unisim.vcomponents.all;
 
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx primitives in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+library UNISIM;
+use UNISIM.VComponents.all;
 
 entity MPA_wrapper is
     Port ( 	clk125 : in  STD_LOGIC;
 				beam_clk : in  STD_LOGIC;
 				beam_data : in  STD_LOGIC;
 				reset : in  STD_LOGIC;
-				fmc1_clk1_M2C_p : in	 std_logic;
+				fmc1_clk1_M2C_p : in	 std_logic;	
 				fmc1_clk1_M2C_n : in	 std_logic;	
 				fmc1_io_pin : inout fmc_io_pin_type;
-				-- for DIO5 output
-				--fmc2_io_pin : inout fmc_io_pin_type;
+				fmc2_io_pin : inout fmc_io_pin_type;
 				ipb_clk : in  STD_LOGIC;
 				ipb_miso_o : out ipb_rbus;
 				ipb_mosi_i : in ipb_wbus;
-				LED : out  STD_LOGIC_VECTOR(1 downto 0); 
-				shutter_o : OUT STD_LOGIC
-			);
+				LED : out  STD_LOGIC_VECTOR(1 downto 0)
+				);
 end MPA_wrapper;
 
 architecture Behavioral of MPA_wrapper is
@@ -107,8 +104,16 @@ COMPONENT MPA_top
 		strip_data_out_n : OUT std_logic_vector(23 downto 0);
 		ipb_rdata : OUT std_logic_vector(31 downto 0);
 		ipb_ack : OUT std_logic;
-		shutter_o : OUT std_logic
+		probe_p : OUT std_logic;
+		probe_n : OUT std_logic;
+		probe_en : OUT std_logic;
+		busy_p : OUT std_logic;
+		busy_n : OUT std_logic;
+		busy_en : OUT std_logic;
+		tel_busy_p : IN std_logic;
+		tel_busy_n : IN std_logic
 		);
+		
 END COMPONENT;
 signal mem_p : std_logic_vector(5 downto 0) := (others =>'0');
 signal mem_n : std_logic_vector(5 downto 0) := (others =>'0');
@@ -120,7 +125,6 @@ signal strip_data_in_p : std_logic_vector(23 downto 0) := (others =>'0');
 signal strip_data_in_n : std_logic_vector(23 downto 0) := (others =>'0');
 signal strip_data_out_p : std_logic_vector(23 downto 0) := (others =>'0');
 signal strip_data_out_n : std_logic_vector(23 downto 0) := (others =>'0');
-
 
 begin
 mem_p(0) <= fmc1_io_pin.hb_p(20);
@@ -256,7 +260,6 @@ fmc1_io_pin.ha_n(4) <= strip_data_out_n(22);
 fmc1_io_pin.ha_p(1) <= strip_data_out_p(23);
 fmc1_io_pin.ha_n(1) <= strip_data_out_n(23);
 
-
 i_MPA_top: MPA_top PORT MAP(
 		clk125 => clk125,
 		beam_clk => beam_clk,
@@ -264,6 +267,8 @@ i_MPA_top: MPA_top PORT MAP(
 		led => LED,
 		hitOR_p => fmc1_clk1_M2C_p,
 		hitOR_n => fmc1_clk1_M2C_n,
+		shutter_p => fmc1_io_pin.ha_p(19),
+		shutter_n => fmc1_io_pin.ha_n(19),
 		calstrobe_p => fmc1_io_pin.la_p(14),
 		calstrobe_n => fmc1_io_pin.la_n(14),
 		conf_en_p => fmc1_io_pin.ha_p(2),
@@ -307,9 +312,15 @@ i_MPA_top: MPA_top PORT MAP(
 		ipb_wdata => ipb_mosi_i.ipb_wdata,
 		ipb_rdata => ipb_miso_o.ipb_rdata,
 		ipb_ack => ipb_miso_o.ipb_ack,
-		shutter_o => shutter_o
+		probe_p => fmc2_io_pin.la_p(29),
+		probe_n => fmc2_io_pin.la_n(29),
+		probe_en => fmc2_io_pin.la_p(30),
+		busy_p => fmc2_io_pin.la_p(28),
+		busy_n => fmc2_io_pin.la_n(28),
+		busy_en => fmc2_io_pin.la_n(24),
+		tel_busy_p => fmc2_io_pin.la_p(16),
+		tel_busy_n => fmc2_io_pin.la_n(16)
 	);
-
 
 end Behavioral;
 

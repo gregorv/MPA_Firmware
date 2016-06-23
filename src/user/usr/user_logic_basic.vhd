@@ -218,14 +218,14 @@ COMPONENT MPA_wrapper
 		ipb_clk : IN std_logic;
 		ipb_miso_o : OUT ipb_rbus;    
 		fmc1_io_pin : INOUT fmc_io_pin_type;      
+		fmc2_io_pin : INOUT fmc_io_pin_type;
 		ipb_mosi_i : IN ipb_wbus;
-		LED : OUT std_logic_vector(1 downto 0);
-		shutter_o : OUT std_logic
+		LED : OUT std_logic_vector(1 downto 0)
 		);
 END COMPONENT;
 signal beam_clk									: std_logic;
 signal beam_data									: std_logic;
-signal shutter_open								: std_logic;
+
 
 --signal ctrl_reg		               : array_32x32bit;
 --signal stat_reg		               : array_32x32bit;
@@ -244,8 +244,6 @@ begin-- ARCHITECTURE
 --@@@@@@@@@@@@@@@@@@@@@@--
 --@@@@@@@@@@@@@@@@@@@@@@--
 
-	
-i_beam_data: IBUFDS generic map(DIFF_TERM => TRUE,IOSTANDARD => "LVDS_25") port map(i => fmc2_io_pin.hb_p(9), ib => fmc2_io_pin.hb_n(9), o => beam_data);
 
 --------------------
 -- Clock In LEMO4 --
@@ -254,10 +252,6 @@ i_beam_data: IBUFDS generic map(DIFF_TERM => TRUE,IOSTANDARD => "LVDS_25") port 
 i_beam_clk : IBUFGDS generic map (DIFF_TERM => TRUE,IOSTANDARD => "LVDS_25")
    port map (
       O => beam_clk,  -- Clock buffer output
-      --I => fmc2_io_pin.hb_p(6),  -- Diff_p clock buffer input
-      --IB => fmc2_io_pin.hb_n(6) -- Diff_n clock buffer input
-		--I => fmc2_clk1_m2c_p,  -- Diff_p clock buffer input
-      --IB => fmc2_clk1_m2c_n -- Diff_n clock buffer input
 		I => fmc2_io_pin.la_p(0),  -- Diff_p clock buffer input
       IB => fmc2_io_pin.la_n(0) -- Diff_n clock buffer input
 	);
@@ -268,81 +262,31 @@ i_clk_out_dis : OBUFT generic map(IOSTANDARD => "lvcmos25")
 		O => fmc2_io_pin.la_p(5),
 		T => '0'
 	);
-	
---------------------
--- Clock In LEMO1 --
---------------------
-
---i_beam_clk : IBUFDS generic map (DIFF_TERM => TRUE,IOSTANDARD => "LVDS_25")
---  port map (
---      O => beam_clk,  -- Clock buffer output
-      --I => fmc2_io_pin.hb_p(6),  -- Diff_p clock buffer input
-      --IB => fmc2_io_pin.hb_n(6) -- Diff_n clock buffer input
---		I => fmc2_io_pin.la_p(20),  -- Diff_p clock buffer input
---      IB => fmc2_io_pin.la_n(20) -- Diff_n clock buffer input
---	);
-	
---i_clk_out_dis : OBUFT generic map(IOSTANDARD => "lvcmos25")
---	port map (
---		I => '1',
---		O => fmc2_io_pin.la_n(24),
---		T => '0'
---	);
-
-
------------------
--- Control LED --
------------------
-
-i_LEDout_en: OBUFT generic map(IOSTANDARD => "lvcmos25")
-	port map (
-		I => beam_clk,
-		O => fmc2_io_pin.la_p(1),
-		T => '0'
-	);
 
 
 --------------------------
 -- Output on LEMO0 --
 --------------------------
 
-i_test_out_p: OBUFDS generic map(IOSTANDARD => "LVDS_25")
-	port map (
-		I => beam_clk,
-		O => fmc2_io_pin.la_p(29),
-		OB => fmc2_io_pin.la_n(29)
-	);
+--i_test_out_p: OBUFDS generic map(IOSTANDARD => "LVDS_25")
+--	port map (
+--		I => beam_clk,
+--		O => fmc2_io_pin.la_p(29),
+--		OB => fmc2_io_pin.la_n(29)
+--	);
 	
 -- Enable output
-i_out_en: OBUFT generic map(IOSTANDARD => "lvcmos25")
-	port map (
-		I => '0',
-		O => fmc2_io_pin.la_p(30),
-		T => '0'
-	);
-
---------------------------
--- Output on LEMO1 --
---------------------------
-
-i_shutter_o: OBUFDS generic map(IOSTANDARD => "LVDS_25")
-	port map (
-		I => shutter_open,
-		O => fmc2_io_pin.la_p(28),
-		OB => fmc2_io_pin.la_n(28)
-	);
-	
--- Enable output
-i_shutter_o_en: OBUFT generic map(IOSTANDARD => "lvcmos25")
-	port map (
-		I => '0',
-		O => fmc2_io_pin.la_n(24),
-		T => '0'
-	);
+--i_out_en: OBUFT generic map(IOSTANDARD => "lvcmos25")
+--	port map (
+--		I => '0',
+--		O => fmc2_io_pin.la_p(30),
+--		T => '0'
+--	);
 
 
+i_beam_data: IBUFDS generic map(DIFF_TERM => TRUE,IOSTANDARD => "LVDS_25") port map(i => fmc2_io_pin.hb_p(9), ib => fmc2_io_pin.hb_n(9), o => beam_data);
 
-	
+   
    --#############################--
    --## GLIB IP & MAC ADDRESSES ##--
    --#############################--
@@ -366,14 +310,16 @@ i_MPA_wrapper: MPA_wrapper PORT MAP(
 		fmc1_clk1_m2c_p => fmc1_clk1_m2c_p,
 		fmc1_clk1_m2c_n => fmc1_clk1_m2c_n,
 		fmc1_io_pin => fmc1_io_pin,
-		--fmc2_io_pin => fmc2_io_pin,
+		fmc2_io_pin => fmc2_io_pin,
 		ipb_clk => ipb_clk_i,
 		ipb_miso_o => ipb_miso_o(MPA),
 		ipb_mosi_i => ipb_mosi_i(MPA),
-		LED => user_v6_led_o,
-		shutter_o => shutter_open
+		LED => user_v6_led_o
 	);
 
+	
+	
+	
 	
 --	--===========================================--
 --	stat_regs_inst: entity work.ipb_user_status_regs

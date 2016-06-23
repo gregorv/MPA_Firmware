@@ -44,13 +44,13 @@ ARCHITECTURE behavior OF acq_tb IS
          clk : IN  std_logic;
          reset : IN  std_logic;
          test_beam : IN  std_logic;
-         beam_start : IN  std_logic;
+--         beam_start : IN  std_logic;
          beam_halt : IN  std_logic;
          start : IN  std_logic;
          hitOR_p : IN  std_logic;
          hitOR_n : IN  std_logic;
-         IsCalib : IN  std_logic;
-         setCLKOR : OUT  std_logic;
+--         IsCalib : IN  std_logic;
+--         setCLKOR : OUT  std_logic;
          done : OUT  std_logic;
          shutter_p : OUT  std_logic;
          shutter_n : OUT  std_logic;
@@ -61,7 +61,8 @@ ARCHITECTURE behavior OF acq_tb IS
          ipb_strobe : IN  std_logic;
          ipb_addr : IN  std_logic_vector(15 downto 0);
          ipb_wdata : IN  std_logic_vector(31 downto 0);
-         ipb_rdata : OUT  std_logic_vector(31 downto 0)
+         ipb_rdata : OUT  std_logic_vector(31 downto 0);
+			calibration : in  STD_LOGIC
         );
     END COMPONENT;
     
@@ -70,20 +71,21 @@ ARCHITECTURE behavior OF acq_tb IS
    signal clk : std_logic := '0';
    signal reset : std_logic := '1';
    signal test_beam : std_logic := '1';
-   signal beam_start : std_logic := '0';
+--   signal beam_start : std_logic := '0';
    signal beam_halt : std_logic := '0';
    signal start : std_logic := '0';
    signal hitOR_p : std_logic := '0';
    signal hitOR_n : std_logic := '1';
-   signal IsCalib : std_logic := '0';
+--   signal IsCalib : std_logic := '0';
    signal ipb_clk : std_logic := '0';
    signal ipb_write : std_logic := '1';
    signal ipb_strobe : std_logic := '0';
    signal ipb_addr : std_logic_vector(15 downto 0) := x"0205";
    signal ipb_wdata : std_logic_vector(31 downto 0) := x"00000050";
+	signal calibration : std_logic := '0';
 
  	--Outputs
-   signal setCLKOR : std_logic;
+--   signal setCLKOR : std_logic;
    signal done : std_logic;
    signal shutter_p : std_logic;
    signal shutter_n : std_logic;
@@ -102,13 +104,13 @@ BEGIN
           clk => clk,
           reset => reset,
           test_beam => test_beam,
-          beam_start => beam_start,
+--          beam_start => beam_start,
           beam_halt => beam_halt,
           start => start,
           hitOR_p => hitOR_p,
           hitOR_n => hitOR_n,
-          IsCalib => IsCalib,
-          setCLKOR => setCLKOR,
+--          IsCalib => IsCalib,
+--          setCLKOR => setCLKOR,
           done => done,
           shutter_p => shutter_p,
           shutter_n => shutter_n,
@@ -119,7 +121,8 @@ BEGIN
           ipb_strobe => ipb_strobe,
           ipb_addr => ipb_addr,
           ipb_wdata => ipb_wdata,
-          ipb_rdata => ipb_rdata
+          ipb_rdata => ipb_rdata,
+          calibration => calibration
         );
 
    -- Clock process definitions
@@ -151,9 +154,9 @@ ipb_strobe <= '1';
       wait for 33 ns;	
 ipb_strobe <= '0';
       wait for clk_period*10;
-beam_start <= '1';
+start <= '1';
       wait for clk_period*10;
-beam_start <= '0';
+start <= '0';
       -- insert stimulus here 
 
       wait;

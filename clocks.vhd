@@ -22,7 +22,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.std_logic_misc.all;
-
+use work.fmc_package.all;
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
 --use IEEE.NUMERIC_STD.ALL;
@@ -46,7 +46,11 @@ entity clocks is
            clk160_PS : out  STD_LOGIC;
            PS_ready : out  STD_LOGIC;
            clk160_p : out  STD_LOGIC;
-           clk160_n : out  STD_LOGIC);
+           clk160_n : out  STD_LOGIC;
+			  probe_p : out STD_LOGIC;
+			  probe_n : out STD_LOGIC;
+			  probe_en : out STD_LOGIC
+			  );
 end clocks;
 
 architecture Behavioral of clocks is
@@ -84,6 +88,8 @@ signal PS_ready_i : std_logic := '0';
 signal PSINCDEC : std_logic := '0';
 signal PS_regp : std_logic_vector(8 downto 0) := (others =>'0');
 signal PS_cntr : std_logic_vector(8 downto 0) := (others =>'0');
+
+signal clk_probe : std_logic;	
 
 begin
 -- clk125 is the system clock
@@ -166,11 +172,14 @@ i_clk160p_buf: bufg port map(i => clk160p_dcm, o => clk160p);
 i_MMCM_beam_clk160 : MMCM_BASE
    generic map (
       BANDWIDTH => "OPTIMIZED",  -- Jitter programming ("HIGH","LOW","OPTIMIZED")
-      CLKFBOUT_MULT_F => 36.0,    -- Multiply value for all CLKOUT (5.0-64.0).
-      CLKFBOUT_PHASE => 0.0,     -- Phase offset in degrees of CLKFB (0.00-360.00).
-      CLKIN1_PERIOD => 37.736,      -- Input clock period in ns to ps resolution (i.e. 33.333 is 30 MHz).
-      CLKOUT0_DIVIDE_F => 6.0,   -- Divide amount for CLKOUT0 (1.000-128.000).
-      DIVCLK_DIVIDE => 1        -- Master division value (1-80)
+      --CLKFBOUT_MULT_F => 36.0,    -- Multiply value for all CLKOUT (5.0-64.0).
+      CLKFBOUT_MULT_F => 16.0,
+		CLKFBOUT_PHASE => 0.0,     -- Phase offset in degrees of CLKFB (0.00-360.00).
+		--CLKIN1_PERIOD => 37.736,      -- Input clock period in ns to ps resolution (i.e. 33.333 is 30 MHz).
+      CLKIN1_PERIOD => 25.0,
+		--CLKOUT0_DIVIDE_F => 6.0,   -- Divide amount for CLKOUT0 (1.000-128.000).
+      CLKOUT0_DIVIDE_F => 4.0,
+		DIVCLK_DIVIDE => 1        -- Master division value (1-80)
    )
    port map (
       -- Clock Outputs: 1-bit (each) output: User configurable clock outputs
@@ -283,16 +292,40 @@ begin
 		end if;
 	end if;
 end process;
-process(beam_clk,test_beam)
-begin
-	if(test_beam = '0')then
-		rst_beam_clk160 <= '1';
-		test_beam_q <= '0';
-	elsif(beam_clk'event and beam_clk = '1')then
-		test_beam_q <= test_beam;
-		rst_beam_clk160 <= not test_beam_q;
-	end if;
-end process;
+--process(beam_clk,test_beam)
+--begin
+--	if(test_beam = '0')then
+--		rst_beam_clk160 <= '1';
+--		test_beam_q <= '0';
+--	elsif(beam_clk'event and beam_clk = '1')then
+--		test_beam_q <= test_beam;
+--		rst_beam_clk160 <= not test_beam_q;
+--	end if;
+--end process;
+
+
+
+--------------------------
+-- Output on LEMO0 --
+--------------------------
+
+clk_probe <= beam_clk;
+
+i_test_out_p: OBUFDS generic map(IOSTANDARD => "LVDS_25")
+	port map (
+		I => clk_probe,
+		O => probe_p,
+		OB => probe_n
+	);
+	
+-- Enable output
+i_out_en: OBUFT generic map(IOSTANDARD => "lvcmos25")
+	port map (
+		I => '0',
+		O => probe_en,
+		T => '0'
+	);
+
 
 end Behavioral;
 
