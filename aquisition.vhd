@@ -159,7 +159,7 @@ begin
 		start_sync(3 downto 0) <= start_sync(2 downto 0) & start;
 		start_sync(4) <= start_sync(3) and not start_sync(2);
 		tel_busy_sync(3 downto 0) <= tel_busy_sync(2 downto 0) & tel_busy;
-		tel_busy_sync(4) <= not tel_busy_sync(3) and tel_busy_sync(2);
+		tel_busy_sync(4) <= tel_busy_sync(3) and tel_busy_sync(2);
 		tel_busy_stop(3 downto 0) <= tel_busy_stop(2 downto 0) & tel_busy;
 		tel_busy_stop(4) <= tel_busy_stop(3) and not tel_busy_stop(2); -- stop busy
 		HITOR_sync(3 downto 0) <= HITOR_sync(2 downto 0) & HITOR;
@@ -293,7 +293,7 @@ begin
 				if(shutter = '0')then
 					state <= idle;
 				-- Start readout if shutter exceeds shutter duration or telescope is busy
-				elsif((test_beam = '0' and HITOR_sync(4) = '1') or time_outed = '1' or tel_busy = '1')then
+				elsif((test_beam = '0' and HITOR_sync(4) = '1') or time_outed = '1' or tel_busy_sync(4) = '1')then
 					state <= fin;
 					cnt_del <= x"000f";
 					set_read_clk <= '1';
